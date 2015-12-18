@@ -1,0 +1,13 @@
+[
+  {
+    "url": "ejemplos/paginas/ejemplo1.php",
+    "metodo": "POST",
+    "argumentosPeticion": {
+      "contrasenha": "1234"
+    },
+    "tipoValidacion": "javascript",
+    "script": "ejemplos/scripts/ejemplo1.js",
+    "argumentosValidacion": {},
+    "resultadoEsperado": true
+  }
+]

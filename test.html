@@ -3,10 +3,70 @@
   <head>
     <meta charset="utf-8">
     <title>Página de test</title>
+    <link rel="stylesheet" href="vendor/bootstrap/css/bootstrap.min.css" media="screen" title="no title" charset="utf-8">
+    <link rel="stylesheet" href="vendor/bootstrap/css/bootstrap-theme.min.css" media="screen" title="no title" charset="utf-8">
   </head>
   <body>
-
+    <div class="container">
+      <h1>Test de caja blanca</h1>
+      <div id="cabecera" style="display:none"></div>
+      <div class="row">
+        <div class="col-lg-12">
+          <div class="" id="resultados" style="display:none"></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-lg-12">
+          <div class="" id="error" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+    <script id="plantilla-cabecera" type="template/twig">
+      URL del json de las pruebas:
+      <pre>
+        {{urlJson}}
+      </pre>
+    </script>
+    <script id="plantilla-resultados" type="template/twig">
+      <h2>Resultados:</h2>
+      <h3>JSON:</h3>
+      <pre>
+        {{resultados|json_encode}}
+      </pre>
+      <h3>Tabla:</h3>
+      <table class="table">
+        <thead>
+          <th>URL</th>
+          <th>Método</th>
+          <th>Argumentos peticion</th>
+          <th>Esperado</th>
+          <th>Obtenido</th>
+          <th>Correcto</th>
+        </thead>
+        <tbody>
+          {% for resultado in resultados %}
+            <tr>
+              <td>{{resultado.url}}</td>
+              <td>{{resultado.metodo}}</td>
+              <td>{{resultado.argumentosPeticion|json_encode}}</td>
+              <td>{{resultado.esperado}}</td>
+              <td>{{resultado.obtenido}}</td>
+              <td>
+                <span style="color:{{resultado.correcto ? 'green': 'red'}}">{{resultado.correcto}}</span>
+              </td>
+            </tr>
+          {% endfor %}
+        </tdbody>
+      </table>
+    </script>
+    <script type="template/twig" id="plantilla-error">
+      <h2>Errores:</h2>
+      <pre>
+        {{error.message}}
+      </pre>
+    </script>
     <script src="vendor/jquery.min.js" charset="utf-8"></script>
+    <script src="vendor/twig.min.js" charset="utf-8"></script>
     <script src="js/tcb.js" charset="utf-8"></script>
     <script src="js/test.js" charset="utf-8"></script>
   </body>

@@ -21,9 +21,64 @@
   }
 
 
-  function TCN(definicionPruebas){
+  function TCB(definicionPruebas){
+    if (!Array.isArray(definicionPruebas)){
+      throw new Error('Definicion de pruebas inválida');
+    }
+    var testsPaginas = [], i, resultados = [];
 
+    for (i = definicionPruebas.length - 1; i >= 0; i--){
+      testsPaginas.push(new TestPagina(definicionPruebas[i]));
+    }
+
+    this.testsPaginas = testsPaginas;
+    this.resultados = [];
   }
+
+  TCB.crearViaJSON = function(urlJson, callback){
+    if (!Herramientas.esUrl(urlJson) && !Herramientas.esPath(urlJson)){
+      throw new Error('URL del json inválida');
+    }
+
+    if (typeof callback !== 'function'){
+      throw new Error('Callback inválido');
+    }
+
+    $.getJSON(urlJson)
+      .then(function(datos){
+        try {
+          var t = new TCB(datos);
+          callback(null, t);
+          return;
+        } catch (e){
+          callback(e);
+        }
+      }, function(error){
+        callback(new Error('JSON de las pruebas incorrecto'));
+      });
+  };
+
+  TCB.prototype.validar = function(callback){
+    if (typeof callback !== 'function') callback = function(){};
+    var i = this.testsPaginas.length - 1, self = this;
+    function recursivo(i){
+      if (i < 0){
+        callback(null, self.resultados);
+        return;
+      }
+
+      self.testsPaginas[i].validar(function(err, resultado){
+        if (err) {
+          callback(err);
+          return;
+        } else {
+          self.resultados.push(resultado);
+          recursivo(i-1);
+        }
+      });
+    }
+    recursivo(i);
+  };
 
   function TestPagina(opts){
     if (opts instanceof Object === false){
@@ -84,8 +139,7 @@
     this.datosPagina = null;
 
     this.resultadoEsperado = resultadoEsperado;
-    this.resultadoObtenido = null;
-    this.resultadoCorrecto = null;
+    this.resultado = null;
   }
 
   TestPagina.funcionPruebaActual = null;
@@ -111,8 +165,7 @@
 
           if (typeof resultadoObtenido === 'boolean'){
             resultado = new Resultado(self.url, self.metodo, self.argumentosPeticion, self.resultadoEsperado, resultadoObtenido);
-            self.resultadoObtenido = resultadoObtenido;
-            self.resultadoCorrecto = resultado.correcto;
+            self.resultado = resultado;
             callback(null, resultado);
           } else {
             callback(new Error('La función de validación del script "'+self.script+'" ha devuelto un valor inválido'));
@@ -125,6 +178,7 @@
   };
 
   TestPagina.prototype.validar = function validar(callback){
+    if (typeof callback !== 'function') callback = function(){};
     var self = this;
     //obtenemos la página
     $.ajax({
@@ -145,6 +199,7 @@
   };
 
   window.TestPagina = TestPagina;
+  window.TCB = TCB;
 
   window.definirPruebaTCB = function(fn){
     if (typeof fn !== 'function'){
