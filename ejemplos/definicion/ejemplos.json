@@ -3,11 +3,32 @@
     "url": "ejemplos/paginas/ejemplo1.php",
     "metodo": "POST",
     "argumentosPeticion": {
-      "contrasenha": "1234"
+      "contrasenha": ""
     },
     "tipoValidacion": "javascript",
     "script": "ejemplos/scripts/ejemplo1.js",
     "argumentosValidacion": {},
-    "resultadoEsperado": true
+    "resultadoEsperado": false
+  },
+  {
+      "url":"ejemplos/paginas/ejemplo1.php",
+      "metodo": "POST",
+      "tipoValidacion": "javascript",
+      "script":"ejemplos/scripts/ejemplo1.js",
+      "argumentosValidacion": {},
+      "tests": [
+        {
+          "argumentosPeticion": {
+            "contrasenha": "1234"
+          },
+          "resultadoEsperado": true
+        },
+        {
+          "argumentosPeticion": {
+            "contrasenha":"12345"
+          },
+          "resultadoEsperado": false
+        }
+      ]
   }
 ]

@@ -27,7 +27,7 @@
     }
     var testsPaginas = [], i, resultados = [];
 
-    for (i = definicionPruebas.length - 1; i >= 0; i--){
+    for (i = 0; i < definicionPruebas.length; i++){
       testsPaginas.push(new TestPagina(definicionPruebas[i]));
     }
 
@@ -60,24 +60,24 @@
 
   TCB.prototype.validar = function(callback){
     if (typeof callback !== 'function') callback = function(){};
-    var i = this.testsPaginas.length - 1, self = this;
+    var self = this;
     function recursivo(i){
-      if (i < 0){
+      if (i === self.testsPaginas.length){
         callback(null, self.resultados);
         return;
       }
 
-      self.testsPaginas[i].validar(function(err, resultado){
+      self.testsPaginas[i].validar(function(err, resultadosPagina){
         if (err) {
           callback(err);
           return;
         } else {
-          self.resultados.push(resultado);
-          recursivo(i-1);
+          self.resultados = self.resultados.concat(resultadosPagina);
+          recursivo(i+1);
         }
       });
     }
-    recursivo(i);
+    recursivo(0);
   };
 
   function TestPagina(opts){
@@ -91,7 +91,8 @@
       url = opts.url,
       metodo = opts.metodo,
       argumentosPeticion = opts.argumentosPeticion,
-      resultadoEsperado = opts.resultadoEsperado;
+      resultadoEsperado = opts.resultadoEsperado,
+      tests = opts.tests;
 
     if (!Herramientas.esUrl(url) && !Herramientas.esPath(url)){
       throw new Error('URL "'+ url + '" inválida al validar la página');
@@ -101,10 +102,6 @@
       throw new Error('Método HTTP inválido');
     }
     metodo = metodo.toUpperCase();
-
-    if (argumentosPeticion instanceof Object === false){
-      argumentosPeticion = {};
-    }
 
     if (argumentosValidacion instanceof Object === false){
       argumentosValidacion = {};
@@ -125,30 +122,59 @@
       }
     }
 
-    if (typeof resultadoEsperado !== 'boolean'){
-      throw new Error('El valor "resultadoEsperado" es inválido para la página "' + resultadoEsperado + '"');
+    if (typeof resultadoEsperado === 'boolean'){
+      if (argumentosPeticion instanceof Object === false){
+        argumentosPeticion = {};
+      }
+
+      if (tests){
+        throw new Error('Formato incorrecto para la url "'+url+'": solo se puede definir un "valorEsperado" o el campo "tests" no las dos opciones');
+      }
+
+      tests = [];
+      tests.push({
+        resultadoEsperado: resultadoEsperado,
+        argumentosPeticion: argumentosPeticion
+      });
+    } else {
+      if (!Array.isArray(tests)){
+        throw new Error('Formato incorrecto para la url "'+url+'": el campo "tests" y "resultadoEsperado" no es válido. Define uno de ellos.');
+      } else if(tests.length === 0) {
+        throw new Error('Formato incorrecto para la url "' + url + '": el campo "tests" no tiene elementos.');
+      } else {
+        var i = 0, correcto = true;
+        while(i < tests.length && correcto){
+          correcto = tests[i] instanceof Object && typeof tests[i].resultadoEsperado === 'boolean';
+          if (correcto && tests[i].argumentosPeticion instanceof Object === false){
+            tests[i].argumentosPeticion = {};
+          }
+          i++;
+        }
+        if (!correcto){
+          throw new Error('Formato incorrecto para la url "' + url + '": El test número "' + (i+1) + '" es incorrecto, campo "resultadoEsperado" inválido');
+        }
+      }
     }
 
     this.url = url;
     this.metodo = metodo;
-    this.argumentosPeticion = argumentosPeticion;
     this.tipoValidacion = tipoValidacion;
     this.argumentosValidacion = argumentosValidacion;
     this.script = script;
+    this.tests = tests;
 
-    this.datosPagina = null;
+    this.resultados = [];
 
-    this.resultadoEsperado = resultadoEsperado;
-    this.resultado = null;
+    console.log(this);
   }
 
   TestPagina.funcionPruebaActual = null;
 
-  TestPagina.prototype.validarUsandoScript = function (callback){
+  TestPagina.prototype.validarUsandoScript = function (test, datosPagina, callback){
     var self = this,
-      resultadoObtenido,
-      resultado;
-    $.getScript(this.script)
+      resultadoObtenido;
+
+    $.getScript(self.script)
       .then(function(contenidoScript){
         //Ejecutamos el script
         TestPagina.pruebaActual = null;
@@ -157,45 +183,66 @@
           callback(new Error('El script "' + self.script + '" no ha definido una función de prueba.'));
         } else {
           try {
-            resultadoObtenido = TestPagina.funcionPruebaActual.call(undefined, self.datosPagina, self.argumentosValidacion, self);
+            resultadoObtenido = TestPagina.funcionPruebaActual.call(undefined, datosPagina, self.argumentosValidacion, self, test);
           } catch (err){
             callback(new Error('La función de validación en el script "' + self.script +'" ha lanzado un error'));
             return;
           }
 
           if (typeof resultadoObtenido === 'boolean'){
-            resultado = new Resultado(self.url, self.metodo, self.argumentosPeticion, self.resultadoEsperado, resultadoObtenido);
-            self.resultado = resultado;
-            callback(null, resultado);
+            callback(null, resultadoObtenido);
           } else {
             callback(new Error('La función de validación del script "'+self.script+'" ha devuelto un valor inválido'));
           }
         }
       },
       function(err){
-        var error = new Error('Se ha producido un error al obtener el script "'+self.script+'"');
+        var error = new Error('Se ha producido un error al obtener el script "' + self.script + '"');
       });
   };
 
   TestPagina.prototype.validar = function validar(callback){
     if (typeof callback !== 'function') callback = function(){};
     var self = this;
-    //obtenemos la página
-    $.ajax({
-      method: self.metodo,
-      url: self.url,
-      data: self.argumentosPeticion
-    }).then(function(datosPagina){
-      self.datosPagina = datosPagina;
 
-      switch(self.tipoValidacion){
-        case 'javascript':
-          self.validarUsandoScript(callback);
-          break;
+    function callbackValidacionPagina(error, resultadoObtenido){
+      var i = this.i;
+
+      if (error){
+        callback(error);
+        return;
       }
-    }, function(error){
-      callback(new Error('Se ha producido un error obteniendo la página "' + self.url + '"'));
-    });
+
+      self.resultados.push(new Resultado(self.url, self.metodo, self.tests[i].argumentosPeticion, self.tests[i].resultadoEsperado, resultadoObtenido));
+      recursivo(i+1);
+    }
+
+    function recursivo(i){
+      if (i === self.tests.length){
+        callback(null, self.resultados);
+        return;
+      }
+
+      console.log('i', i, self.tests[i]);
+
+      $.ajax({
+        method: self.metodo,
+        url: self.url,
+        data: self.tests[i].argumentosPeticion
+      }).then(function(datosPagina){
+        switch(self.tipoValidacion){
+          case 'javascript':
+            console.log('tests', i, self.tests);
+            self.validarUsandoScript.call(self, self.tests[i], datosPagina, callbackValidacionPagina.bind({i:i}));
+            break;
+        }
+      }, function(error){
+        callback(new Error('Se ha producido un error obteniendo la página "' + self.url + '" en el test número "' + i + '"'));
+      });
+    }
+
+    recursivo(0);
+
   };
 
   window.TestPagina = TestPagina;

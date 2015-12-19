@@ -29,21 +29,42 @@ Argumentos de la función:
 Se debe crear la definición de la pruebas en formato JSON. Ejemplo:
 ```json
 [{
-  "url": "ejemplos/paginas/ejemplo1.php",
-  "metodo": "POST",
-  "argumentosPeticion": {
-    "contrasenha": "1234"
-  },
-  "tipoValidacion": "javascript",
-  "script": "ejemplos/scripts/ejemplo1.js",
-  "argumentosValidacion": {},
-  "resultadoEsperado": true
+    "url": "ejemplos/paginas/ejemplo1.php",
+    "metodo": "POST",
+    "argumentosPeticion": {
+      "contrasenha": ""
+    },
+    "tipoValidacion": "javascript",
+    "script": "ejemplos/scripts/ejemplo1.js",
+    "argumentosValidacion": {},
+    "resultadoEsperado": true
+},
+{
+    "url":"ejemplos/paginas/ejemplo1.php",
+    "metodo": "POST",
+    "tipoValidacion": "javascript",
+    "script":"ejemplos/scripts/ejemplo1.js",
+    "argumentosValidacion": {},
+    "tests": [
+      {
+        "argumentosPeticion": {
+          "contrasenha": "1234"
+        },
+        "resultadoEsperado": true
+      },
+      {
+        "argumentosPeticion": {
+          "contrasenha":"12345"
+        },
+        "resultadoEsperado": false
+      }
+    ]
 }]
 ```
 
 NOTA: Todas los enlaces son relativos a la ruta donde está el `test.html`
 
-Explicación de cada propiedad:
+Explicación de cada propiedad para el primer elemento del array:
 
 - `url`: Obligatorio. Url que se va analizar.
 - `metodo`: Obligatorio. Método HTTP POST o GET. No es sensible a mayúsculas.
@@ -52,6 +73,14 @@ Explicación de cada propiedad:
 - `script`: URL del script de pruebas (el creado en el punto 1.1).
 - `argumentosValidacion`: Opcional. Objeto que permite definir argumentos personalizados y que se pueden leer desde el script.
 - `resultadoEsperado`: Obligatorio. Valor booleano indicando si se espera que el test devuelva un resultado correcto o incorrecto.
+
+En el segundo caso se realizan dos tests para la misma página:
+
+- Se quita la propiedad `resultadoEsperado`.
+- Se quita la propiedad `argumentosPeticion`.
+- Se crea la propiedad `tests` que contiene un array de objetos con las siguientes propiedades:
+  1. `resultadoEsperado`: Obligatorio. El resultado esperado para ese test concreto.
+  2. `argumentosPeticion`: Opcional. Objeto con los argumentos de la petición para ese test concreto.
 
 ### 1.3 Realización de los tests
 Dos modos de utilización:
