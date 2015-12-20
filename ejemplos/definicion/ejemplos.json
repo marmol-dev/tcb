@@ -1,14 +1,14 @@
 [
   {
-    "url": "ejemplos/paginas/ejemplo1.php",
-    "metodo": "POST",
-    "argumentosPeticion": {
-      "contrasenha": ""
-    },
-    "tipoValidacion": "javascript",
-    "script": "ejemplos/scripts/ejemplo1.js",
-    "argumentosValidacion": {},
-    "resultadoEsperado": false
+      "url": "ejemplos/paginas/ejemplo1.php",
+      "metodo": "POST",
+      "argumentosPeticion": {
+        "contrasenha": ""
+      },
+      "tipoValidacion": "javascript",
+      "script": "ejemplos/scripts/ejemplo1.js",
+      "argumentosValidacion": {},
+      "resultadoEsperado": false
   },
   {
       "url":"ejemplos/paginas/ejemplo1.php",
@@ -26,6 +26,13 @@
         {
           "argumentosPeticion": {
             "contrasenha":"12345"
+          },
+          "resultadoEsperado": false
+        },
+        {
+          "argumentosPeticion": {
+            "uncampo": "1234444444444444444444444444444444444444444444444444444",
+            "otrocampo": "....................................................."
           },
           "resultadoEsperado": false
         }
